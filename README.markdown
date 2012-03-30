@@ -1,9 +1,14 @@
-d8888b. db    db  .o88b.  .o88b.  .d88b.       d8888b. db      db    db .d8888. 
-88  `8D `8b  d8' d8P  Y8 d8P  Y8 .8P  Y8.      88  `8D 88      88    88 88'  YP 
-88oodD'  `8bd8'  8P      8P      88    88      88oodD' 88      88    88 `8bo.   
-88~~~      88    8b      8b      88    88      88~~~   88      88    88   `Y8b. 
-88         88    Y8b  d8 Y8b  d8 `8b  d8'      88      88booo. 88b  d88 db   8D 
-88         YP     `Y88P'  `Y88P'  `Y88P'       88      Y88888P ~Y8888P' `8888Y' 
+```
+ .oPYo.                              .oPYo. 8               
+ 8    8                              8    8 8               
+o8YooP' o    o .oPYo. .oPYo. .oPYo. o8YooP' 8 o    o .oPYo. 
+ 8      8    8 8    ' 8    ' 8    8  8      8 8    8 Yb..   
+ 8      8    8 8    . 8    . 8    8  8      8 8    8   'Yb. 
+ 8      `YooP8 `YooP' `YooP' `YooP'  8      8 `YooP' `YooP' 
+:..::::::....8 :.....::.....::.....::..:::::..:.....::.....:
+::::::::::ooP'.:::::::::::::::::::::::::::::::::::::::::::::
+::::::::::...:::::::::::::::::::::::::::::::::::::::::::::::
+```
 
 [Pycco Plus][pp] is a fork of Pycco, a Python port of Docco: the original
 quick-and-dirty, hundred-line- long, literate-programming-style documentation
