@@ -1,33 +1,30 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """
-"**Pycco**" is a Python port of [Docco](http://jashkenas.github.com/docco/):
-the original quick-and-dirty, hundred-line-long, literate-programming-style
-documentation generator. It produces HTML that displays your comments
-alongside your code. Comments are passed through
+"**Pycco Plus**" is a fork of [Pycco](http://fitzgen.github.com/pycco), a Python 
+port of [Docco](http://jashkenas.github.com/docco/): the original
+quick-and-dirty, hundred-line-long, literate-programming-style documentation
+generator. It produces HTML that displays your comments alongside your code.
+Comments are passed through
 [Markdown](http://daringfireball.net/projects/markdown/syntax) and
 [SmartyPants](http://daringfireball.net/projects/smartypants), while code is
-passed through [Pygments](http://pygments.org/) for syntax highlighting.
-This page is the result of running Pycco against its own source file.
+passed through [Pygments](http://pygments.org/) for syntax highlighting.  This
+page is the result of running Pycco Plus against its own source file.
 
-If you install Pycco, you can run it from the command-line:
+If you install Pycco Plus, you can run it from the command-line:
 
-    pycco src/*.py
+    pyccoplus src/*.py
 
 This will generate linked HTML documentation for the named source files,
 saving it into a `docs` folder by default.
 
-The [source for Pycco](https://github.com/fitzgen/pycco) is available on GitHub,
+The [source for Pycco Plus](https://github.com/joshdmiller/pyccoplus) is available on GitHub,
 and released under the MIT license.
 
-To install Pycco, simply
+To install the latest source:
 
-    pip install pycco
-
-Or, to install the latest source
-
-    git clone git://github.com/fitzgen/pycco.git
-    cd pycco
+    git clone git://github.com/joshdmiller/pyccoplus.git
+    cd pyccoplus
     python setup.py install
 """
 
@@ -227,7 +224,7 @@ def generate_html(source, sections, preserve_paths=True, outdir=None):
     """
     Once all of the code is finished highlighting, we can generate the HTML file
     and write out the documentation. Pass the completed sections into the
-    template found in `resources/pycco.html`.
+    template found in `resources/pyccoplus.html`.
 
     Pystache will attempt to recursively render context variables, so we must
     replace any occurences of `{{`, which is valid in some languages, with a
@@ -239,12 +236,12 @@ def generate_html(source, sections, preserve_paths=True, outdir=None):
         raise TypeError("Missing the required 'outdir' keyword argument")
     title = path.basename(source)
     dest = destination(source, preserve_paths=preserve_paths, outdir=outdir)
-    csspath = path.relpath(path.join(outdir, "pycco.css"), path.split(dest)[0])
+    csspath = path.relpath(path.join(outdir, "pyccoplus.css"), path.split(dest)[0])
 
     for sect in sections:
         sect["code_html"] = re.sub(r"\{\{", r"__DOUBLE_OPEN_STACHE__", sect["code_html"])
 
-    rendered = pycco_template({
+    rendered = pyccoplus_template({
         "title"       : title,
         "stylesheet"  : csspath,
         "sections"    : sections,
@@ -254,6 +251,24 @@ def generate_html(source, sections, preserve_paths=True, outdir=None):
     })
 
     return re.sub(r"__DOUBLE_OPEN_STACHE__", "{{", rendered).encode("utf-8")
+
+# === Custom Lexers ===
+
+from pygments.lexer import RegexLexer, bygroups
+from pygments.token import Comment, Keyword, Text, Operator
+
+class XResourcesLexer(RegexLexer):
+    name = 'XResources'
+    aliases = ['xresources','Xdefaults','xdefaults']
+    filenames = ['.Xresources', '.Xdefaults', "Xresources", "Xdefaults"]
+
+    tokens = {
+        'root': [
+            (r'!.*', Comment),
+            (r'^([\w\.\s\t\-]*)(:)(.*)$', bygroups( Keyword, Operator, Text ))
+            #(r'^(.+)(:)(.*)$', bygroups( Keyword, Operator, Text ))
+        ]
+    }
 
 # === Helpers & Setup ===
 
@@ -272,10 +287,13 @@ from markdown import markdown
 from os import path
 from pygments import lexers, formatters
 
-# A list of the languages that Pycco supports, mapping the file extension to
+# A list of the languages that Pycco Plus supports, mapping the file extension to
 # the name of the Pygments lexer and the symbol that indicates a comment. To
-# add another language to Pycco's repertoire, add it here.
+# add another language to Pycco Plus's repertoire, add it here.
 languages = {
+
+    # This first set of languages are those whose lexers are supported out of
+    # the box with Pystache.
     ".coffee": { "name": "coffee-script", "symbol": "#" },
 
     ".pl":  { "name": "perl", "symbol": "#" },
@@ -302,6 +320,16 @@ languages = {
         "multistart": "--[[", "multiend": "--]]"},
 
     ".erl": { "name": "erlang", "symbol": "%%" },
+
+    ".sh": { "name": "bash", "symbol": "#" },
+
+    ".hs": { "name": "haskell", "symbol": "--" },
+
+    # These languages are not supported out of the box with Pystache. In order
+    # to not require a rebuild of Pystache to support these languages, a lexer
+    # can br provided manually.
+    # FIXME: The lexer shouldn't be stored in memory unless we're sure we'll need it.
+    "Xresources": { "name": "xresources", "lexer": XResourcesLexer(), "symbol": "!" },
 }
 
 # Build out the appropriate matchers and delimiters for each language.
@@ -318,14 +346,23 @@ for ext, l in languages.items():
     l["divider_html"] = re.compile(r'\n*<span class="c[1]?">' + l["symbol"] + 'DIVIDER</span>\n*')
 
     # Get the Pygments Lexer for this language.
-    l["lexer"] = lexers.get_lexer_by_name(l["name"])
+    if "lexer" not in l:
+        l["lexer"] = lexers.get_lexer_by_name(l["name"])
 
 def get_language(source):
     """Get the current language we're documenting, based on the extension."""
 
     try:
-        return languages[ source[source.rindex("."):] ]
+        # We need to determine if the filename even contains an extension. If
+        # it does, we try retrieving the lexer by extension; otherwise, we try
+        # to retrieve the lexer by full name.
+        if "." in path.basename(source):
+            return languages[ source[source.rindex("."):] ]
+        else:
+            return languages[path.basename(source)]
     except KeyError:
+        # the lexer could be located by neither its extension nor its full
+        # name. Now we'll see if Pygments can guess it.
         source = open(source, "r")
         code = source.read()
         source.close()
@@ -345,7 +382,10 @@ def destination(filepath, preserve_paths=True, outdir=None):
     if not outdir:
         raise TypeError("Missing the required 'outdir' keyword argument.")
     try:
-        name = re.sub(r"\.[^.]*$", "", filepath)
+        if "." in path.basename(filepath):
+            name = re.sub(r"\.[^.]*$", "", filepath)
+        else:
+            name = filepath
     except ValueError:
         name = filepath
     if not preserve_paths:
@@ -372,11 +412,11 @@ def ensure_directory(directory):
 def template(source):
     return lambda context: pystache.render(source, context)
 
-# Create the template that we will use to generate the Pycco HTML page.
-pycco_template = template(pycco_resources.html)
+# Create the template that we will use to generate the Pycco Plus HTML page.
+pyccoplus_template = template(pycco_resources.html)
 
 # The CSS styles we'd like to apply to the documentation.
-pycco_styles = pycco_resources.css
+pyccoplus_styles = pycco_resources.css
 
 # The start of each Pygments highlight block.
 highlight_start = "<div class=\"highlight\"><pre>"
@@ -397,8 +437,8 @@ def process(sources, preserve_paths=True, outdir=None):
     # Proceed to generating the documentation.
     if sources:
         ensure_directory(outdir)
-        css = open(path.join(outdir, "pycco.css"), "w")
-        css.write(pycco_styles)
+        css = open(path.join(outdir, "pyccoplus.css"), "w")
+        css.write(pyccoplus_styles)
         css.close()
 
         def next_file():
@@ -413,7 +453,7 @@ def process(sources, preserve_paths=True, outdir=None):
             with open(destination(s, preserve_paths=preserve_paths, outdir=outdir), "w") as f:
                 f.write(generate_documentation(s, preserve_paths=preserve_paths, outdir=outdir))
 
-            print "pycco = %s -> %s" % (s, dest)
+            print "pyccoplus = %s -> %s" % (s, dest)
 
             if sources:
                 next_file()

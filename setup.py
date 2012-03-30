@@ -1,18 +1,18 @@
 from setuptools import setup, find_packages
 
 setup(
-        name = "Pycco",
-        version = "0.3.0",
-        description = """A Python port of Docco: the original quick-and-dirty,
+        name = "Pycco Plus",
+        version = "0.1.0",
+        description = """A modified version of Pycco, the Python port of Docco: the original quick-and-dirty,
         hundred-line-long, literate-programming-style documentation generator.
         """,
-        author = "Nick Fitzgerald",
-        author_email = "fitzgen@gmail.com",
-        url = "http://fitzgen.github.com/pycco",
+        author = "Josh D Miller",
+        author_email = "josh@joshdmiller.com.com",
+        url = "http://www.github.com/joshdmiller/pycco-plus",
         packages = find_packages(),
         entry_points = {
             'console_scripts': [
-                'pycco = pycco.main:main',
+                'pyccoplus = pyccoplus.main:main',
                 ]
             },
         install_requires = ['markdown', 'pygments', 'pystache', 'smartypants'],
