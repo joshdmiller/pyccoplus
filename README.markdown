@@ -10,7 +10,7 @@ o8YooP' o    o .oPYo. .oPYo. .oPYo. o8YooP' 8 o    o .oPYo.
 ::::::::::...:::::::::::::::::::::::::::::::::::::::::::::::
 ```
 
-[Pycco Plus][pp] is a fork of Pycco, a Python port of Docco: the original
+[Pycco Plus][pp] is a fork of [Pycco][pycco], a Python port of Docco: the original
 quick-and-dirty, hundred-line- long, literate-programming-style documentation
 generator. This fork was created out a specific need to incorporate
 non-standard [Pygments][pyg] lexers without forcing the user to install custom
@@ -22,10 +22,11 @@ As of the end of March 2012, Pycco Plus requires the development branch of
 clone the repo and build it manually. Once 0.5.0 is released, the standard
 installation through pip will be sufficient.
 
-[pp]: http://www.github.com/joshdmiller/pycco-plus
+[pp]: http://www.github.com/joshdmiller/pyccoplus
 [pyg]: http://www.pygments.org
 [df]: http://dotfiles.joshdmiller.com
 [pys]: https://github.com/defunkt/pystache
+[pycco]: http://www.github.com/fitzgen/pycco
 
 Others:
 
