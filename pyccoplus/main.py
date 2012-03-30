@@ -257,6 +257,8 @@ def generate_html(source, sections, preserve_paths=True, outdir=None):
 from pygments.lexer import RegexLexer, bygroups
 from pygments.token import Comment, Keyword, Text, Operator
 
+# The `XResourcesLexer` is very basic lexer to enable syntax highlighting on X
+# Resources files like `~/.Xresources` and `~/.Xdefaults`.
 class XResourcesLexer(RegexLexer):
     name = 'XResources'
     aliases = ['xresources','Xdefaults','xdefaults']
@@ -264,9 +266,8 @@ class XResourcesLexer(RegexLexer):
 
     tokens = {
         'root': [
-            (r'!.*', Comment),
+            (r'!.*$', Comment),
             (r'^([\w\.\s\t\-]*)(:)(.*)$', bygroups( Keyword, Operator, Text ))
-            #(r'^(.+)(:)(.*)$', bygroups( Keyword, Operator, Text ))
         ]
     }
 
@@ -286,6 +287,21 @@ import time
 from markdown import markdown
 from os import path
 from pygments import lexers, formatters
+
+# The following is a list of HTML escape codes for various symbols.
+html_escape_table = {
+    "&": "&amp;",
+    '"': "&quot;",
+    "'": "&apos;",
+    ">": "&gt;",
+    "<": "&lt;",
+}
+ 
+
+# `html_escape` escapes the symbols found within `html_escape_table`. 
+def html_escape(text):
+    """Produce entities within text."""
+    return "".join(html_escape_table.get(c,c) for c in text)
 
 # A list of the languages that Pycco Plus supports, mapping the file extension to
 # the name of the Pygments lexer and the symbol that indicates a comment. To
@@ -325,6 +341,11 @@ languages = {
 
     ".hs": { "name": "haskell", "symbol": "--" },
 
+    # Vim is listed twice here to pick up automatically both any file that ends
+    # in `.vim` and any file named `vimrc`.
+    ".vim": { "name": "vim", "symbol": "&quot;" },
+    "vimrc": { "name": "vim", "symbol": "\"" },
+
     # These languages are not supported out of the box with Pystache. In order
     # to not require a rebuild of Pystache to support these languages, a lexer
     # can br provided manually.
@@ -342,8 +363,15 @@ for ext, l in languages.items():
     l["divider_text"] = "\n" + l["symbol"] + "DIVIDER\n"
 
     # The mirror of `divider_text` that we expect Pygments to return. We can split
-    # on this to recover the original sections.
-    l["divider_html"] = re.compile(r'\n*<span class="c[1]?">' + l["symbol"] + 'DIVIDER</span>\n*')
+    # on this to recover the original sections. The symbol here is escaped if
+    # necessary. This is necessary for those comment symbols that Pygments will
+    # escape for us. Without this, the assembling of the HTML will not work as
+    # expected because the pattern will not be found. For example, VimL uses
+    # `"` to indicate comments.  Splitting sections in text mode is no problem,
+    # but when Pygments highlights the document, it will escape all instances
+    # of the double to quote `&quot;`.  When we process the hightlighted HTML
+    # for splitting, out pattern will no longer be found.
+    l["divider_html"] = re.compile(r'\n*<span class="c[1]?">' + html_escape(l["symbol"]) + 'DIVIDER</span>\n*')
 
     # Get the Pygments Lexer for this language.
     if "lexer" not in l:
